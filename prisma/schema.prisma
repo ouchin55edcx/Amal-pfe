@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  clerkId     String       @id @unique
+  Favoris     Favoris[]
+  Historique  Historique[]
+  Proche      Proche?
+  procheGeres ProcheGere[]
+  Profil      Profil?
+}
+
+model Profil {
+  id               String             @id @default(cuid())
+  prenom           String
+  nom              String
+  dateNaissance    DateTime?
+  sexe             String
+  telephone        String
+  email            String             @unique
+  ville            String
+  assuranceMaladie String
+  cin              String             @unique
+  profession       String
+  adresse          String
+  codePostal       String
+  lieuNaissance    String
+  photoProfil      String?
+  userId           String             @unique
+  user             User               @relation(fields: [userId], references: [clerkId])
+  rendezVousCommun RendezVousCommun[]
+}
+
+model Favoris {
+  id        Int    @id @default(autoincrement())
+  userId    String
+  medecinId String
+  user      User   @relation(fields: [userId], references: [clerkId])
+
+  @@unique([userId, medecinId])
+}
+
+model Historique {
+  id           Int    @id @default(autoincrement())
+  userId       String
+  rendezVousId String
+  user         User   @relation(fields: [userId], references: [clerkId])
+}
+
+model Proche {
+  id            Int          @id @default(autoincrement())
+  prenom        String
+  nom           String
+  dateNaissance DateTime?
+  sexe          String
+  telephone     String
+  ville         String
+  lieuNaissance String
+  photoProfil   String?
+  adresse       String?
+  codePostal    String?
+  userAccountId String?      @unique
+  userAccount   User?        @relation(fields: [userAccountId], references: [clerkId])
+  gerants       ProcheGere[]
+}
+
+model ProcheGere {
+  id       Int    @id @default(autoincrement())
+  userId   String
+  procheId Int
+  role     String
+  proche   Proche @relation(fields: [procheId], references: [id])
+  user     User   @relation(fields: [userId], references: [clerkId])
+
+  @@unique([userId, procheId])
+}
+
+model Specialite {
+  id            String          @id @default(cuid())
+  nom           String          @unique
+  listeMedecins ListeMedecins[]
+}
+
+model Ville {
+  id            String          @id @default(cuid())
+  region        String?
+  nom           String          @unique
+  listeMedecins ListeMedecins[]
+}
+
+model ListeMedecins {
+  id           String             @id @default(cuid())
+  nom          String
+  adresse      String?
+  specialiteId String
+  villeId      String
+  specialite   Specialite         @relation(fields: [specialiteId], references: [id])
+  ville        Ville              @relation(fields: [villeId], references: [id])
+  rendezVous   RendezVousCommun[] @relation("ListeMedecinsToRendezVousCommun")
+}
+
+model RendezVousCommun {
+  id          String        @id @default(cuid())
+  db_url      String
+  db_name     String
+  id_profil   String
+  id_medecin  String
+  date        DateTime
+  heure_debut String
+  heure_fin   String
+  statut      String
+  medecin     ListeMedecins @relation("ListeMedecinsToRendezVousCommun", fields: [id_medecin], references: [id])
+  profil      Profil        @relation(fields: [id_profil], references: [id])
+}
