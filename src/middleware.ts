@@ -1,17 +1,20 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 // Create a matcher for routes that should bypass authentication
-const publicRoutes = createRouteMatcher([
+const isPublicRoute = createRouteMatcher([
   '/',
   '/api/doctors(.*)',
   '/api/search(.*)',
   '/api/verif-test(.*)',
   '/api/send-verif-test(.*)',
+  '/api/cities(.*)',
   // Add other public routes as needed
 ]);
 
-export default clerkMiddleware({
-  publicRoutes
+export default clerkMiddleware(async (auth, req) => {
+  if (!isPublicRoute(req)) {
+    await auth.protect();
+  }
 });
 
 export const config = {
